@@ -66,7 +66,7 @@ echo "----JOB [$JOB_NAME.$JOB_ID] START [`date`] on HOST [$HOSTNAME]----"
 
 
 # to prevent tmp folder from being saved to home
-cd /mnt/BIAC/munin3.dhe.duke.edu/Simon/Bilateral.01/Analysis
+cd /mnt/BIAC/munin3.dhe.duke.edu/Simon/Bilateral.01/Analysis/Tmp
 
 SUBJ=$1
 SUBJ2=$2
@@ -92,7 +92,7 @@ FTTGEN=1
 ACTSEEDING=1
 ACTCONNECTOME=1
 SIFTACTCONNECTOME=1
-CLEANUP=1
+CLEANUP=0
 
 
 # prefix key:
@@ -137,10 +137,10 @@ fi
 
 if [ $DENOISE = 1 ]; then
 	# slight skullstrip prior to denoising for speed
-	bet ${OUTPUT}/m${SUBJ2}_dwi.nii.gz ${OUTPUT}/bm${SUBJ2}_dwi.nii.gz -f 0.1 -F -force
+	bet ${OUTPUT}/m${SUBJ2}_dwi.nii.gz ${OUTPUT}/bm${SUBJ2}_dwi.nii.gz -f 0.1 -F 
 
 	# denoise dwi
-	dwidenoise ${OUTPUT}/bm${SUBJ2}_dwi.nii.gz ${OUTPUT}/dbm${SUBJ2}_dwi.nii.gz -noise ${OUTPUT}/n${SUBJ2}_dwi.nii.gz -force 
+	dwidenoise ${OUTPUT}/bm${SUBJ2}_dwi.nii.gz ${OUTPUT}/dbm${SUBJ2}_dwi.nii.gz -noise ${OUTPUT}/n${SUBJ2}_dwi.nii.gz  
 else
 	echo "Skipped 2DENOISE"
 fi
@@ -165,16 +165,16 @@ fi
 
 if [ $PREPROC = 1 ]; then
 	# dwipreprocess -- eddy field correction
-	dwipreproc ${OUTPUT}/dbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/edbm${SUBJ2}_dwi.nii.gz -rpe_none -pe_dir AP -fslgrad ${OUTPUT}/bia5_${SUBJ2}_bvecs ${OUTPUT}/bia5_${SUBJ2}_bvals -export_grad_fsl ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals  -force -tempdir /mnt/BIAC/munin3.dhe.duke.edu/Simon/Bilateral.01/Analysis
+	dwipreproc ${OUTPUT}/dbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/edbm${SUBJ2}_dwi.nii.gz -rpe_none -pe_dir AP -fslgrad ${OUTPUT}/bia5_${SUBJ2}_bvecs ${OUTPUT}/bia5_${SUBJ2}_bvals -export_grad_fsl ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals -tempdir /mnt/BIAC/munin3.dhe.duke.edu/Simon/Bilateral.01/Analysis/Tmp
 
 	# create an initial mask via bet
-	bet ${OUTPUT}/edbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/kedbm${SUBJ2}_dwi.nii.gz -f 0.2 -F -m -force
+	bet ${OUTPUT}/edbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/kedbm${SUBJ2}_dwi.nii.gz -f 0.2 -F -m 
 
 	# bias-field correction
-	dwibiascorrect -ants -mask ${OUTPUT}/kedbm${SUBJ2}_dwi_mask.nii.gz ${OUTPUT}/kedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals  -force
+	dwibiascorrect -ants -mask ${OUTPUT}/kedbm${SUBJ2}_dwi_mask.nii.gz ${OUTPUT}/kedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals  
 
 	# create a better mask with the bias-corrected info
-	dwi2mask ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi_mask.nii.gz -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals -force 
+	dwi2mask ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi_mask.nii.gz -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals  
 else
 	echo "Skipped 4PREPROC"
 fi
@@ -182,16 +182,16 @@ fi
 
 if [ $MEASURES = 1 ]; then
 	# create tensor, create FA/RD/AD
-	dwi2tensor -mask ${OUTPUT}/ckedbm${SUBJ2}_dwi_mask.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi_tensor.nii.gz -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals -force 
-	tensor2metric ${OUTPUT}/ckedbm${SUBJ2}_dwi_tensor.nii.gz -fa ${OUTPUT}/ckedbm${SUBJ2}_dwi_FA.nii.gz -rd ${OUTPUT}/ckedbm${SUBJ2}_dwi_RD.nii.gz -ad ${OUTPUT}/ckedbm${SUBJ2}_dwi_AD.nii.gz -force
+	dwi2tensor -mask ${OUTPUT}/ckedbm${SUBJ2}_dwi_mask.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi_tensor.nii.gz -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals  
+	tensor2metric ${OUTPUT}/ckedbm${SUBJ2}_dwi_tensor.nii.gz -fa ${OUTPUT}/ckedbm${SUBJ2}_dwi_FA.nii.gz -rd ${OUTPUT}/ckedbm${SUBJ2}_dwi_RD.nii.gz -ad ${OUTPUT}/ckedbm${SUBJ2}_dwi_AD.nii.gz 
 
 	# get the response function
-	dwi2response tournier ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/${SUBJ2}_dwi_out.txt -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals -force
+	dwi2response tournier ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/${SUBJ2}_dwi_out.txt -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals 
 	# response function for wm/gm/csf
-	dwi2response dhollander ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/${SUBJ2}_dwi_sfwm.txt ${OUTPUT}/${SUBJ2}_dwi_gm.txt ${OUTPUT}/${SUBJ2}_dwi_csf.txt -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals -force
+	dwi2response dhollander ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/${SUBJ2}_dwi_sfwm.txt ${OUTPUT}/${SUBJ2}_dwi_gm.txt ${OUTPUT}/${SUBJ2}_dwi_csf.txt -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals 
 
 	# acquiring FOD
-	dwi2fod csd ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/${SUBJ2}_dwi_out.txt ${OUTPUT}/${SUBJ2}_dwi_FOD.nii.gz -mask ${OUTPUT}/ckedbm${SUBJ2}_dwi_mask.nii.gz -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals -force
+	dwi2fod csd ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/${SUBJ2}_dwi_out.txt ${OUTPUT}/${SUBJ2}_dwi_FOD.nii.gz -mask ${OUTPUT}/ckedbm${SUBJ2}_dwi_mask.nii.gz -fslgrad ${OUTPUT}/e${SUBJ2}_bvecs ${OUTPUT}/e${SUBJ2}_bvals 
 else
 	echo "Skipped 5MEASURES"
 fi
@@ -200,7 +200,7 @@ fi
 if [ $ROIS = 1 ]; then
 	# generate the b0 
 	fslroi ${OUTPUT}/ckedbm${SUBJ2}_dwi.nii.gz ${OUTPUT}/ckedbm${SUBJ2}_dwi_b0.nii.gz 0 1 
-	bet ${OUTPUT}/${SUBJ2}_dwi_b0.nii.gz ${OUTPUT}/bckedbm${SUBJ2}_dwi_b0.nii.gz -f 0.1 
+	bet ${OUTPUT}/ckedbm${SUBJ2}_dwi_b0.nii.gz ${OUTPUT}/bckedbm${SUBJ2}_dwi_b0.nii.gz -f 0.1 
 
 	# registration: MNI to native space
 	flirt -in /usr/local/packages/fsl-5.0.6/data/standard/MNI152_T1_2mm_brain -ref ${OUTPUT}/bckedbm${SUBJ2}_dwi_b0.nii.gz -out ${OUTPUT}/${SUBJ2}_dwi_MNI_to_native -omat ${OUTPUT}/${SUBJ2}_dwi_MNI_to_native.mat -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12  -interp nearestneighbour 
@@ -217,7 +217,7 @@ if [ $FTTGEN = 1 ]; then
 
 	# adding fslroi command to generate b0 from original b=1000, to then use that "pristine" altered b0 for 5ttgen
 	fslroi ${EXPERIMENT}/Data/Anat/${SUBJ}/bia5_${SUBJ2}_${RUN}.nii.gz ${OUTPUT}/${RUN}_${SUBJ2}_dwi_b0.nii.gz 0 1
-	
+	 
 	flirt -in ${EXPERIMENT}/Data/Anat/${SUBJ}/bia5_${SUBJ2}_${T1RUN}.nii.gz -ref ${OUTPUT}/${RUN}_${SUBJ2}_dwi_b0.nii.gz -out ${OUTPUT}/${SUBJ2}_anat -omat ${OUTPUT}/${SUBJ2}_anat.mat -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 6  -interp trilinear
 	5ttgen fsl ${OUTPUT}/${SUBJ2}_anat.nii.gz ${OUTPUT}/tt_${SUBJ2}.mif -nocrop 
 	5tt2gmwmi ${OUTPUT}/tt_${SUBJ2}.mif ${OUTPUT}/tt_${SUBJ2}_GMWMI.mif 
