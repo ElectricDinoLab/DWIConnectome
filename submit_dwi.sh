@@ -1,12 +1,16 @@
-EXPERIMENT=Bilateral.01
-#test comment
+# define this variable as the basedir - it's our experiment's name in our file structure  
+EXPERIMENT=experiment_name
 
-SUBJ=("20180920_23647" "20180928_23674" "20180907_23617" "20180906_23614" "20180828_23586")
-SUBJ2=("23647" "23674" "23617" "23614" "23586")
-RUNTYPE=("6" "6" "6" "6" "6")
+# SUBJ is the anat directory where your images are held
+SUBJ=("anat_dir_subject1" "anat_dir_subject2" "anat_dir_subject3")
 
+# SUBJ2 is the output directory where your processed files will be placed
+SUBJ2=("output_dir_subject1" "output_dir_subject2" "output_dir_subject3")
 
-for k in 0 1 2 3 4;
+# runtype indicates the order of b1000, b2000, and t1 runs - use if this varies across subjects 
+RUNTYPE=("runtype_case_subject1" "runtype_case_subject2" "runtype_case_subject3")
+
+for k in 0;
 do
 	declare SUBJ=${SUBJ[$k]}
 	declare SUBJ2=${SUBJ2[$k]}
@@ -14,19 +18,15 @@ do
 
 	case $type2 in
 		1) 
-			RUNS=("004" "005" "006");;
+			RUNS=("b1000_run" "b2000_run" "t1_run");; # one order of b1000, b2000, t1 runs during scan session
 		2) 
-			RUNS=("005" "006" "007");;
+			RUNS=("b1000_run" "b2000_run" "t1_run");; # another order of b1000, b2000, t1 runs during scan session
 		3) 
-			RUNS=("006" "007" "008");;
-		4) 
-			RUNS=("004" "005" "007");;
-		5)
-			RUNS=("005" "006" "008");;
-		6) 
-			RUNS=("005" "006" "003")
-	esac
+			RUNS=("b1000_run" "b2000_run" "t1_run");; # a third order of b1000, b2000, t1 runs during scan session 
 
+		# add cases as necessary
+		# remove this entire case statement or subparts of the cases as necessary 
+	esac
 
 	echo $SUBJ
 	echo $SUBJ2
@@ -40,7 +40,7 @@ do
 	echo $T1RUN
 		
 
-	qsub -v EXPERIMENT=$EXPERIMENT qsub_Bilateral_dwi.sh ${SUBJ} ${SUBJ2} ${RUN} ${RUN2} ${T1RUN}
+	qsub -v EXPERIMENT=$EXPERIMENT qsub_dwi.sh ${SUBJ} ${SUBJ2} ${RUN} ${RUN2} ${T1RUN}
 
 done
 
